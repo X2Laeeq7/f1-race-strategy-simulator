@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include "simulator.hpp"
+#include "format.hpp"
 
 int main(){
     TyreCompound soft{"Soft",-0.5,0.03,15.0,0.8,3.0};
@@ -22,16 +23,17 @@ int main(){
     
     std::vector<Stint> strategy = {{0,15},{2,35}};
     RaceResult res = simulateRace(config, strategy, 42);
+    std::cout << "Laps | Compound | TyreAge | FuelLoad | Time\n";
     for (const auto& lr : res.laps){
-        std::cout << "Lap "<<lr.lapNumber << " | "<<lr.compoundName <<" | "<<lr.tyreAge<<" | "<<lr.fuelKg<<" | "<<lr.lapTime <<std::endl;
+        std::cout << "Lap "<<lr.lapNumber << " | "<<lr.compoundName <<" | "<<lr.tyreAge<<" | "<<lr.fuelKg<<" | "<<formatTime(lr.lapTime) <<"\n";
     }
-    std::cout << "Total: "<<res.totalTime<<std::endl;
-    double sum = 0.0;
-    for (const auto& lr : res.laps) sum += lr.lapTime;
-    std::cout << "Sum of laps: " << sum << "\n";
-    std::cout << "Total:       " << res.totalTime << "\n";
+    std::cout << "Total Time: "<<formatTime(res.totalTime)<<"\n";
     std::cout << "Pit stops: " << res.pitStops << "\n";
     std::cout << "Strategy: " << res.strategyString << "\n";
+    std::cout << formatTime(84.445)<<"\n";
+    std::cout << formatTime(3434.39)<<"\n";
+    std::cout << formatTime(4.445)<<"\n";
+    std::cout << formatTime(59.999)<<"\n";
     return 0;
     
 }
