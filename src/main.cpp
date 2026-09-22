@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <cmath>
 
 struct TyreCompound{
     std::string name;
@@ -44,6 +45,12 @@ struct RaceResult{
     std::string strategyString;
 };
 
+double tyreTimeLoss(const TyreCompound& c, int tyreAge){
+    double x = c.cliffSteepness * (tyreAge - c.cliffLap);
+    double sigmoid_x = 1.0/(1.0 + std::exp(-x));
+    return c.linearDeg * tyreAge + c.cliffMagnitude * sigmoid_x;
+};
+
 int main(){
     TyreCompound soft{"Soft",-0.5,0.03,18.0,0.8,1.5};
     TyreCompound medium{"Medium",0.0,0.02,25.0,0.6,1.0};
@@ -63,7 +70,12 @@ int main(){
     config.compounds.push_back(hard);
     
     for (const auto& c : config.compounds) {
-        std::cout << c.name << " cliffLap=" << c.cliffLap <<std::endl;
+        std::cout <<c.name<<std::endl;
+        for (int i =1;i<41;i++){
+            
+            std::cout << tyreTimeLoss(c,i)<<std::endl;
+        }
+
     }
     return 0;
 }
