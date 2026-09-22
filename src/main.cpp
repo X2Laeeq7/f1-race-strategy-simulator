@@ -71,6 +71,38 @@ double computeLapTime(
     return baseLapTime + c.paceOffset + tyreLoss + fuelLoss + pitLoss + n;
 };
 
+RaceResult simulateRace(const RaceConfig& config, const std::vector<Stint>& strategy, unsigned seed){
+    RaceResult result;
+    result.totalTime = 0.0;
+    result.pitStops = 0;
+    std::mt19937 rng(seed);
+    std::normal_distribution<double> noise(0.0, config.randomSigma);
+    int tyreAge = 0;
+    int lapNumber = 0;
+    double fuel = config.fuelKg;
+    int compoundIdx = strategy[0].compoundIndex;
+    result.strategyString = config.compounds[compoundIdx].name;
+    for (int i=0;i < strategy[0].laps;++i){
+        lapNumber++;
+        double t = computeLapTime(config.compounds[compoundIdx],tyreAge,fuel,false,config.pitLossSeconds,config.baseLapTime,config.fuelPenaltyPerKg,rng,noise);
+        result.totalTime += t;
+
+        LapResult lr;
+        lr.lapNumber = lapNumber;
+        lr.compoundName = config.compounds[compoundIdx].name;
+        lr.tyreAge = tyreAge + 1;
+        lr.fuelKg = fuel;
+        lr.box = false;
+        lr.lapTime = t;
+        result.laps.push_back(lr);
+
+        tyreAge++;
+        fuel -= config.fuelBurnPerLapKg;
+        if (fuel < 0.0){fuel = 0.0;}
+    }
+    return result;
+};
+
 int main(){
     TyreCompound soft{"Soft",-0.5,0.03,15.0,0.8,3.0};
     TyreCompound medium{"Medium",0.0,0.02,25.0,0.6,1.0};
@@ -89,12 +121,15 @@ int main(){
     config.compounds.push_back(medium);
     config.compounds.push_back(hard);
     
-    std::mt19937 rng(42);
-    std::normal_distribution<double> noise(0.0, config.randomSigma);
-    for (int lap=0; lap < 40; ++lap){
-        double t = computeLapTime(config.compounds[0],lap,config.fuelKg,false,config.pitLossSeconds,config.baseLapTime,config.fuelPenaltyPerKg,rng,noise);
-        std::cout << "LAP "<<lap+1<<": "<<t<<std::endl;
-        config.fuelKg -= config.fuelBurnPerLapKg;
-    };
+    std::vector<Stint> strategy = {{0,40}};
+    RaceResult res = simulateRace(config, strategy, 42);
+    for (const auto& lr : res.laps){
+        std::cout << "Lap "<<lr.lapNumber << " | "<<lr.compoundName <<" | "<<lr.tyreAge<<" | "<<lr.fuelKg<<" | "<<lr.lapTime <<std::endl;
+    }
+    std::cout << "Total: "<<res.totalTime<<std::endl;
+    double sum = 0.0;
+for (const auto& lr : res.laps) sum += lr.lapTime;
+std::cout << "Sum of laps: " << sum << "\n";
+std::cout << "Total:       " << res.totalTime << "\n";
     return 0;
 }
