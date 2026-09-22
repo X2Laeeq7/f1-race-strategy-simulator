@@ -14,7 +14,7 @@ int main(){
     config.fuelKg = 100.0;
     config.fuelBurnPerLapKg = 1.8;
     config.fuelPenaltyPerKg = 0.03;
-    config.pitLossInSeconds = 18.0;    // was 23.0
+    config.pitLossInSeconds = 18.0;   
     config.pitLossOutSeconds = 5.0;
     config.randomSigma = 0.10;
 
