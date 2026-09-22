@@ -21,19 +21,19 @@ Lap 16/50 | Medium | 1 | 73 | 1:29.178
 Lap 17/50 | Medium | 2 | 71.2 | 1:24.178
 ```
 
-### Prerequisites
+## Prerequisites
 
 - Windows 10/11
 - MinGW / g++
 
-### Compile
+## Compile
 Run:
  
 ```bash
 ./compile.bat
 ```
 
-### Run
+## Run
 
 ```bash
 ./sim.exe
