@@ -75,30 +75,46 @@ RaceResult simulateRace(const RaceConfig& config, const std::vector<Stint>& stra
     RaceResult result;
     result.totalTime = 0.0;
     result.pitStops = 0;
+    int totalLaps = 0;
+    for (const auto& s : strategy)totalLaps += s.laps;
+    if (totalLaps != config.totalLaps){
+        std::cerr << "Warning: strategy laps (" << totalLaps << ") != race laps (" << config.totalLaps << ")\n";
+        return result;
+    }
     std::mt19937 rng(seed);
     std::normal_distribution<double> noise(0.0, config.randomSigma);
-    int tyreAge = 0;
     int lapNumber = 0;
     double fuel = config.fuelKg;
-    int compoundIdx = strategy[0].compoundIndex;
-    result.strategyString = config.compounds[compoundIdx].name;
-    for (int i=0;i < strategy[0].laps;++i){
-        lapNumber++;
-        double t = computeLapTime(config.compounds[compoundIdx],tyreAge,fuel,false,config.pitLossSeconds,config.baseLapTime,config.fuelPenaltyPerKg,rng,noise);
-        result.totalTime += t;
+    
+    for (size_t s = 0; s < strategy.size();++s){
+        const Stint& stint = strategy[s];
+        int compoundIdx = stint.compoundIndex;
+        int tyreAge = 0;
+        bool isLastStint = ( s == strategy.size()-1);
+        if (s > 0) result.strategyString += " -> ";
+        result.strategyString += config.compounds[compoundIdx].name;
+        for (int i=0;i < stint.laps;++i){
+            lapNumber++;
+            bool isLastLapOfStint = (i == stint.laps -1);
+            bool box = isLastLapOfStint && !isLastStint;
+            double t = computeLapTime(config.compounds[compoundIdx],tyreAge,fuel,box,config.pitLossSeconds,config.baseLapTime,config.fuelPenaltyPerKg,rng,noise);
+            result.totalTime += t;
 
-        LapResult lr;
-        lr.lapNumber = lapNumber;
-        lr.compoundName = config.compounds[compoundIdx].name;
-        lr.tyreAge = tyreAge + 1;
-        lr.fuelKg = fuel;
-        lr.box = false;
-        lr.lapTime = t;
-        result.laps.push_back(lr);
+            LapResult lr;
+            lr.lapNumber = lapNumber;
+            lr.compoundName = config.compounds[compoundIdx].name;
+            lr.tyreAge = tyreAge + 1;
+            lr.fuelKg = fuel;
+            lr.box = box;
+            lr.lapTime = t;
+            result.laps.push_back(lr);
 
-        tyreAge++;
-        fuel -= config.fuelBurnPerLapKg;
-        if (fuel < 0.0){fuel = 0.0;}
+            if (box)result.pitStops++;
+            else tyreAge++;
+
+            fuel -= config.fuelBurnPerLapKg;
+            if (fuel < 0.0){fuel = 0.0;}
+        }
     }
     return result;
 };
@@ -121,15 +137,18 @@ int main(){
     config.compounds.push_back(medium);
     config.compounds.push_back(hard);
     
-    std::vector<Stint> strategy = {{0,40}};
+    std::vector<Stint> strategy = {{0,15},{0,15},{1,35}};
     RaceResult res = simulateRace(config, strategy, 42);
     for (const auto& lr : res.laps){
         std::cout << "Lap "<<lr.lapNumber << " | "<<lr.compoundName <<" | "<<lr.tyreAge<<" | "<<lr.fuelKg<<" | "<<lr.lapTime <<std::endl;
     }
     std::cout << "Total: "<<res.totalTime<<std::endl;
     double sum = 0.0;
-for (const auto& lr : res.laps) sum += lr.lapTime;
-std::cout << "Sum of laps: " << sum << "\n";
-std::cout << "Total:       " << res.totalTime << "\n";
+    for (const auto& lr : res.laps) sum += lr.lapTime;
+    std::cout << "Sum of laps: " << sum << "\n";
+    std::cout << "Total:       " << res.totalTime << "\n";
+    std::cout << "Pit stops: " << res.pitStops << "\n";
+    std::cout << "Strategy: " << res.strategyString << "\n";
     return 0;
+    
 }
