@@ -5,4 +5,4 @@ if %errorlevel% neq 0 (
     pause
     exit /b %errorlevel%
 )
-echo Build succeeded. 
+echo Build succeeded.

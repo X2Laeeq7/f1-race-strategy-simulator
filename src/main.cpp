@@ -14,26 +14,24 @@ int main(){
     config.fuelKg = 100.0;
     config.fuelBurnPerLapKg = 1.8;
     config.fuelPenaltyPerKg = 0.03;
-    config.pitLossSeconds = 23.0;
+    config.pitLossInSeconds = 18.0;    // was 23.0
+    config.pitLossOutSeconds = 5.0;
     config.randomSigma = 0.10;
 
     config.compounds.push_back(soft);
     config.compounds.push_back(medium);
     config.compounds.push_back(hard);
     
-    std::vector<Stint> strategy = {{0,15},{2,35}};
+    std::vector<Stint> strategy = {{0,15},{1,35}};
     RaceResult res = simulateRace(config, strategy, 42);
     std::cout << "Laps | Compound | TyreAge | FuelLoad | Time\n";
     for (const auto& lr : res.laps){
-        std::cout << "Lap "<<lr.lapNumber << " | "<<lr.compoundName <<" | "<<lr.tyreAge<<" | "<<lr.fuelKg<<" | "<<formatTime(lr.lapTime) <<"\n";
+        std::cout << "Lap "<<lr.lapNumber <<"/"<<res.laps.size() <<" | "<<lr.compoundName <<" | "<<lr.tyreAge<<" | "<<lr.fuelKg<<" | "<<formatTime(lr.lapTime) <<"\n";
+        if (lr.box){std::cout << ">>> Box Box: Switching to "<<config.compounds[lr.nextCompoundIndex].name<<"\n";}
     }
     std::cout << "Total Time: "<<formatTime(res.totalTime)<<"\n";
     std::cout << "Pit stops: " << res.pitStops << "\n";
     std::cout << "Strategy: " << res.strategyString << "\n";
-    std::cout << formatTime(84.445)<<"\n";
-    std::cout << formatTime(3434.39)<<"\n";
-    std::cout << formatTime(4.445)<<"\n";
-    std::cout << formatTime(59.999)<<"\n";
     return 0;
     
 }

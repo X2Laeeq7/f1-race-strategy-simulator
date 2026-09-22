@@ -1,15 +1,13 @@
 #pragma once
 #include "tyres.hpp"
-#include <string>
 #include <random>
-#include <iostream>
 
 inline double computeLapTime(
     const TyreCompound& c,
     int tyreAge,
     double fuelKg, 
     bool box,
-    double pitLossSeconds,
+    double pitLoss,
     double baseLapTime,
     double fuelPenaltyPerKg,
     std::mt19937& rng,
@@ -17,7 +15,6 @@ inline double computeLapTime(
 ){
     double tyreLoss = tyreTimeLoss(c,tyreAge);
     double fuelLoss = fuelKg * fuelPenaltyPerKg;
-    double pitLoss = box ? pitLossSeconds : 0.0;
     double n = noise(rng);
     return baseLapTime + c.paceOffset + tyreLoss + fuelLoss + pitLoss + n;
 };
@@ -47,8 +44,13 @@ inline RaceResult simulateRace(const RaceConfig& config, const std::vector<Stint
         for (int i=0;i < stint.laps;++i){
             lapNumber++;
             bool isLastLapOfStint = (i == stint.laps -1);
+            bool isFirstLapOfStint = (i == 0);
             bool box = isLastLapOfStint && !isLastStint;
-            double t = computeLapTime(config.compounds[compoundIdx],tyreAge,fuel,box,config.pitLossSeconds,config.baseLapTime,config.fuelPenaltyPerKg,rng,noise);
+            bool outLap = isFirstLapOfStint && s > 0;
+            double pitPenalty = 0.0;
+            if (box) pitPenalty = config.pitLossInSeconds;
+            else if (outLap) pitPenalty = config.pitLossOutSeconds;
+            double t = computeLapTime(config.compounds[compoundIdx],tyreAge,fuel,box,pitPenalty,config.baseLapTime,config.fuelPenaltyPerKg,rng,noise);
             result.totalTime += t;
 
             LapResult lr;
@@ -58,10 +60,11 @@ inline RaceResult simulateRace(const RaceConfig& config, const std::vector<Stint
             lr.fuelKg = fuel;
             lr.box = box;
             lr.lapTime = t;
+            if (box) lr.nextCompoundIndex = strategy[s + 1].compoundIndex;
             result.laps.push_back(lr);
+            result.pitStops++;
 
-            if (box)result.pitStops++;
-            else tyreAge++;
+            tyreAge++;
 
             fuel -= config.fuelBurnPerLapKg;
             if (fuel < 0.0){fuel = 0.0;}

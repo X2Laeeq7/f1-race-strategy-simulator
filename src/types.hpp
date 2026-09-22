@@ -23,7 +23,8 @@ struct RaceConfig {
     double fuelKg;
     double fuelBurnPerLapKg;
     double fuelPenaltyPerKg;
-    double pitLossSeconds;
+    double pitLossInSeconds;
+    double pitLossOutSeconds;
     double randomSigma;
     std::vector<TyreCompound> compounds;
 };
@@ -35,6 +36,7 @@ struct LapResult {
     double fuelKg;
     bool box;
     double lapTime;
+    int nextCompoundIndex = -1;
 };
 
 struct RaceResult{
